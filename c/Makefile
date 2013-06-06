@@ -5,6 +5,7 @@ INCLUDES = -I.
 
 LONG_VER=1.0.0
 TARGET=libsg.so.$(LONG_VER)
+SHORT_NAME=libsg.so
 
 INSTALL_PREFIX=/usr
 
@@ -27,3 +28,4 @@ install: $(TARGET)
 	@install -m755 $(TARGET) $(INSTALL_PREFIX)/lib
 	@mkdir $(INSTALL_PREFIX)/include/sg -p
 	@install -m644 $(HEADERS:%.h=sg/%.h) -t $(INSTALL_PREFIX)/include/sg
+	ln -s $(INSTALL_PREFIX)/lib/$(TARGET) $(INSTALL_PREFIX)/lib/$(SHORT_NAME)
