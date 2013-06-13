@@ -13,7 +13,7 @@ SOURCES = sgfile.c sgbitmap.c sgimage.c utils.c
 HEADERS = $(SOURCES:.c=.h)
 
 $(TARGET): $(SOURCES:.c=.o)
-	$(CC) $(LDFLAGS) $(SOURCES:.c=.o) -o $(TARGTE)
+	$(CC) $(LDFLAGS) $(SOURCES:.c=.o) -o $(TARGET)
 
 sgfile.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c sgfile.c -o sgfile.o
@@ -25,7 +25,7 @@ utils.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c utils.c -o utils.o
 
 install: $(TARGET)
-	@install -m755 $(TARGET) $(INSTALL_PREFIX)/lib
-	@mkdir $(INSTALL_PREFIX)/include/sg -p
-	@install -m644 $(HEADERS:%.h=sg/%.h) -t $(INSTALL_PREFIX)/include/sg
+	install -m755 $(TARGET) $(INSTALL_PREFIX)/lib
+	mkdir $(INSTALL_PREFIX)/include/sg -p
+	install -m644 $(HEADERS:%.h=sg/%.h) -t $(INSTALL_PREFIX)/include/sg
 	ln -s $(INSTALL_PREFIX)/lib/$(TARGET) $(INSTALL_PREFIX)/lib/$(SHORT_NAME)
