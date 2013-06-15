@@ -13,6 +13,7 @@ extern "C" {
 struct SgFile;
 
 struct SgFile *sg_read_file(const char *filename);
+// Delete's the file and all bitmaps and images that are owned by it.
 void sg_delete_file(struct SgFile *file);
 
 uint32_t sg_get_file_version(struct SgFile *file);
