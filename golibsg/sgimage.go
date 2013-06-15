@@ -15,10 +15,13 @@ import (
 
 type SgImage struct {
 	ptr unsafe.Pointer
+
+	// Keep the file alive, as img is collected in it's dtor
+	parent *SgFile
 }
 
-func createImage(ptr *C.struct_SgImage) *SgImage {
-	img := &SgImage{unsafe.Pointer(ptr)}
+func createImage(ptr *C.struct_SgImage, parent *SgFile) *SgImage {
+	img := &SgImage{unsafe.Pointer(ptr), parent}
 	return img
 }
 

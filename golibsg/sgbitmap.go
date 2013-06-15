@@ -15,13 +15,14 @@ import (
 
 type SgBitmap struct {
 	ptr unsafe.Pointer
+
+	// We need to keep this alive as the bmp is collected in the file's
+	// destructor
+	parent *SgFile
 }
 
-func createBitmap(ptr *C.struct_SgBitmap) *SgBitmap {
-	bmp := &SgBitmap{unsafe.Pointer(ptr)}
-	runtime.SetFinalizer(bmp, func (b *SgBitmap) {
-		C.sg_delete_bitmap((*C.struct_SgBitmap)(b.ptr))
-	})
+func createBitmap(ptr *C.struct_SgBitmap, parent *SgFile) *SgBitmap {
+	bmp := &SgBitmap{unsafe.Pointer(ptr), parent}
 	return bmp
 }
 
@@ -49,7 +50,7 @@ func (b *SgBitmap) Images() ([]*SgImage, error) {
 		if img == nil {
 			return []*SgImage{}, fmt.Errorf("Image %v was nil", i)
 		}
-		imgs[i] = createImage(img)
+		imgs[i] = createImage(img, b.parent)
 	}
 	return imgs, nil
 }

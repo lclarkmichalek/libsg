@@ -18,7 +18,7 @@ type SgFile struct {
 }
 
 func createFile(ptr *C.struct_SgFile) *SgFile {
-	file := &SgFile{unsafe.Pointer(ptr)}
+	file := &SgFile{unsafe.Pointer(ptr), []interface{}{}}
 	runtime.SetFinalizer(file, func (f *SgFile) {
 		C.sg_delete_file((*C.struct_SgFile)(f.ptr))
 	})
@@ -69,8 +69,9 @@ func (f *SgFile) Bitmaps() ([]*SgBitmap, error) {
 		if bmp == nil {
 			return []*SgBitmap{}, fmt.Errorf("Bitmap %v was nil", i)
 		}
-		bmps[i] = createBitmap(bmp)
+		bmps[i] = createBitmap(bmp, f)
 	}
+	f.children
 	return bmps, nil
 }
 
@@ -83,7 +84,7 @@ func (f *SgFile) Images() ([]*SgImage, error) {
 		if img == nil {
 			return []*SgImage{}, fmt.Errorf("Image %v was nil", i)
 		}
-		imgs[i] = createImage(img)
+		imgs[i] = createImage(img, f)
 	}
 	return imgs, nil
 }
