@@ -42,7 +42,7 @@ func (i *SgImage) IsExtern() bool {
 }
 
 func (i *SgImage) Parent() *SgBitmap {
-	return createBitmap(C.sg_get_image_parent((*C.struct_SgImage)(i.ptr)))
+	return createBitmap(C.sg_get_image_parent((*C.struct_SgImage)(i.ptr)), i.parent)
 }
 
 type SgImageData struct {

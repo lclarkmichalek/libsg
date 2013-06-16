@@ -9,7 +9,6 @@ import "C"
 
 import (
 	"unsafe"
-	"runtime"
 	"fmt"
 )
 
