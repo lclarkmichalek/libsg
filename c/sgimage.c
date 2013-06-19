@@ -109,7 +109,8 @@ struct SgImage *sg_read_image(int id, FILE *file, bool includeAlpha)
 {
     struct SgImage *img = (struct SgImage*)malloc(sizeof(struct SgImage));
     img->parent = NULL;
-    img->error = NULL;
+    img->error = malloc(sizeof(char));
+    img->error[0] = '\0';
 
     img->imageId = id;
     img->record = img->workRecord = (struct SgImageRecord*)malloc(sizeof(struct SgImageRecord));
@@ -218,10 +219,11 @@ void setError(struct SgImage *img, const char *message)
 {
     printf("SGErr: %s\n", message);
     if (img->error != NULL) {
-        free(img->error);
+        //free(img->error);
     }
     img->error = (char*)malloc(sizeof(char) * (strlen(message) + 1));
-    strcpy(img->error, message);
+    strncpy(img->error, message, strlen(message));
+    img->error[strlen(message)] = '\0';
 }
 
 struct SgImageData *sg_load_image_data(struct SgImage *img, const char *filename555)
@@ -243,16 +245,25 @@ struct SgImageData *sg_load_image_data(struct SgImage *img, const char *filename
         return NULL;
     }
     if (img->workRecord->width <= 0 || img->workRecord->height <= 0) {
-        setError(img, "Width or height invalid");
+        char buffer[80];
+        snprintf(buffer, 80, "Width or height invalid (%ix%i)",
+                 img->workRecord->width, img->workRecord->height);
+        setError(img, buffer);
         return NULL;
     } else if (img->workRecord->length <= 0) {
-        setError(img, "No image data available");
+        char buffer[80];
+        snprintf(buffer, 80, "No image data available (len=%i)",
+                 img->workRecord->length);
+        setError(img, buffer);
         return NULL;
     }
 
     FILE *file555 = fopen(filename555, "rb");
     if (file555 == NULL) {
-        setError(img, "Unable to open 555 file");
+        char buffer[80];
+        snprintf(buffer, 80, "Unable to open 555 file (%s)",
+                 filename555);
+        setError(img, buffer);
         return NULL;
     }
 
@@ -289,9 +300,13 @@ struct SgImageData *sg_load_image_data(struct SgImage *img, const char *filename
         loadSpriteImage(img, pixels, buffer);
         break;
 
-    default:
-        setError(img, "Unknown image type");
+    default: {
+        char buffer[80];
+        snprintf(buffer, 80, "Unknown image type %i",
+                 img->workRecord->type);
+        setError(img, buffer);
         return NULL;
+    }
     }
 
     if (img->workRecord->alpha_length) {
@@ -308,9 +323,9 @@ struct SgImageData *sg_load_image_data(struct SgImage *img, const char *filename
     struct SgImageData *result = (struct SgImageData*)malloc(sizeof(struct SgImageData));
     result->width = img->workRecord->width;
     result->height = img->workRecord->height;
-    result->rMask = 0xff;
-    result->bMask = 0xff00;
-    result->gMask = 0xff0000;
+    result->rMask = 0x000000ff;
+    result->gMask = 0x0000ff00;
+    result->bMask = 0x00ff0000;
     result->aMask = 0xff000000;
     result->data = pixels;
     return result;
@@ -320,21 +335,40 @@ uint8_t* fillBuffer(struct SgImage *img, FILE *file)
 {
     int data_length = img->workRecord->length + img->workRecord->alpha_length;
     if (data_length <= 0) {
-        setError(img, "Data length < 0");
+        char err[80];
+        snprintf(err, 80, "Data length invalid (%i)",
+                 data_length);
+        setError(img, err);
+        return NULL;
     }
     uint8_t *buffer = (uint8_t*)(malloc(data_length * sizeof(uint8_t)));
+    if (buffer == NULL) {
+        setError(img, "Could not allocate buffer");
+        return NULL;
+    }
 
     // Somehow externals have 1 byte added to their offset
-    fseek(file, img->workRecord->offset - img->workRecord->flags[0], SEEK_SET);
+    int succ = fseek(file, img->workRecord->offset - img->workRecord->flags[0],
+                     SEEK_SET);
+    if (succ != 0 || ferror(file) != 0) {
+        char err[80];
+        snprintf(err, 80, "Could not seek to %i in file",
+                 img->workRecord->offset - img->workRecord->flags[0]);
+        setError(img, err);
+        return NULL;
+    }
 
     int data_read = (int)fread(buffer, 1, data_length, file);
-    if (data_length != data_read) {
+    if (data_length != data_read || ferror(file) != 0) {
         if (data_read + 4 == data_length && feof(file)) {
             // Exception for some C3 graphics: last image is 'missing' 4 bytes
             buffer[data_read] = buffer[data_read+1] = 0;
             buffer[data_read+2] = buffer[data_read+3] = 0;
         } else {
-            setError(img, "Unable to read from file");
+            char err[80];
+            snprintf(err, 80, "Unable to read from file (read %i of %i)",
+                     data_read, data_length);
+            setError(img, err);
             free(buffer);
             return NULL;
         }

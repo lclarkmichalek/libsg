@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -fPIC
+CFLAGS = -Wall -Wextra -std=c99 -fPIC -g
 LDFLAGS = -shared -Wl,-soname,libsg.so.1 -lc
 INCLUDES = -I.
 
@@ -28,4 +28,9 @@ install: $(TARGET)
 	install -m755 $(TARGET) $(INSTALL_PREFIX)/lib
 	mkdir $(INSTALL_PREFIX)/include/sg -p
 	install -m644 $(HEADERS:%.h=sg/%.h) -t $(INSTALL_PREFIX)/include/sg
-	ln -s $(INSTALL_PREFIX)/lib/$(TARGET) $(INSTALL_PREFIX)/lib/$(SHORT_NAME)
+	ln -f -s $(INSTALL_PREFIX)/lib/$(TARGET) $(INSTALL_PREFIX)/lib/$(SHORT_NAME)
+	ln -f -s $(INSTALL_PREFIX)/lib/$(TARGET) $(INSTALL_PREFIX)/lib/$(SHORT_NAME).1
+
+clean:
+	rm $(SOURCES:.c=.o)
+	rm $(TARGET)
