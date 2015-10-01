@@ -180,6 +180,8 @@ bool checkVersion(struct SgFile *file)
         FILE *fp = fopen(file->filename, "r");
         fseek(fp, 0, SEEK_END);
         uint32_t filesize = (uint32_t)ftell(fp);
+        
+        fclose(fp);
 
         if (file->header->sg_filesize == 74480 || filesize == file->header->sg_filesize) {
             return true;
